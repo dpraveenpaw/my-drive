@@ -1,0 +1,119 @@
+Example: Terraform script for an EC2 instance 
+------------------------------------------------------
+provider "aws" { 
+region = "us-east-1" 
+} 
+resource "aws_instance" "web" { 
+ami           
+= "ami-0c55b159cbfafe1f0" 
+instance_type = "t2.micro" 
+}
+resource "aws_s3_bucket_versioning" "myfirstbucket_versioning" {
+  bucket = aws_s3_bucket.myfirstbucket.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+------------------------------------------------------
+
+-------------------------------------------------------
+
+Q8: Write a Bash script to monitor disk space and send an alert. 
+Answer: 
+#!/bin/bash 
+THRESHOLD=80 
+USAGE=$(df -h / | grep / | awk '{print $5}' | sed 's/%//') 
+if [ "$USAGE" -gt "$THRESHOLD" ]; then 
+echo "Disk space alert! Usage: $USAGE%" | mail -s "Disk Alert" admin@example.com 
+fi
+#In your disk space monitoring script, THRESHOLD is set to 80, meaning if disk usage exceeds 80%, an alert is triggered.
+-----------------------------
+How to Use the Script:
+Save the script to a file, e.g., disk_monitor.sh.
+Make it executable:
+Edit
+chmod +x disk_monitor.sh
+Run it manually:
+./disk_monitor.sh
+Automate using a cron job (e.g., check every 10 minutes):
+crontab -e
+Add this line:
+*/10 * * * * /path/to/disk_monitor.sh
+This runs the script every 10 minutes.
+-----------------------------------------
+jenkins pipeline
+pipeline{
+    agent any
+    stages{
+        stage("checking code in git repo"){
+            steps{
+               git branch: 'main', url: 'https://github.com/dpraveenpaw/amazon.git'
+            }
+        }
+        stage("code build"){
+            steps{
+                sh "mvn compile"
+            }
+        }
+        stage("code test"){
+            steps {
+                sh "mvn test"
+            }
+        }
+        stage("QA reaport"){
+            steps{
+                sh "mvn pmd:pmd"
+            }
+        }
+        stage("bild artifacts"){
+            steps{
+                sh "mvn package"
+            }
+        }
+  }
+  }
+-------------------------------------------------------
+Explaining the Simple Dockerfile Nginx
+# Use the official Nginx image
+FROM nginx:latest
+
+# Expose port 80 for web access
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
+-g: This flag allows passing global directives to Nginx.
+#"daemon off;: Keeps Nginx running in the foreground, preventing the container from exiting immediately."
+#"If this is not included, Nginx will start and then exit, stopping the container."
+------------------------------------------------
+--- #install the git into nodes ansible
+- name: Install Git
+  hosts: all
+  become: yes
+  tasks:
+   - name: Install Git
+     yum:
+       name: git
+       state: latest
+-------------------------------------------------
+Q12: What is a Kubernetes Pod?
+Answer:
+A Pod is the smallest deployable unit in Kubernetes that runs one or more containers.
+💡 Example Pod YAML:
+yaml
+Copy
+Edit
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+    - name: myapp
+      image: nginx
+      ports:
+        - containerPort: 80
+✅ Deploy it using: kubectl apply -f mypod.yaml
+-------------------------------------------------------
