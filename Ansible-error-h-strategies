@@ -1,0 +1,142 @@
+Ansible Strategies and Error Handling
+1. Ansible Strategies
+In Ansible, strategies define how tasks are executed across multiple hosts. The default strategy is linear, but there are other strategies that control task execution behavior.
+1.1 Linear Strategy (Default)
+• Executes tasks one by one on each host sequentially.
+• Ensures all hosts complete a task before moving to the next task.
+• Best for consistency and reliability.
+Example:
+
+- hosts: all
+  tasks:
+    - name: Install package
+      yum:
+        name: httpd
+        state: present
+
+1.2 Free Strategy
+• Allows each host to run tasks independently without waiting for others.
+• Best for faster execution when tasks on different hosts don’t depend on each other.
+Example:
+
+- hosts: all
+  strategy: free
+  tasks:
+    - name: Install package
+      yum:
+        name: httpd
+        state: present
+
+1.3 Host-Pinned Strategy
+• Ensures each host completes all tasks before moving to the next host.
+• Best for host-specific operations.
+Example:
+
+- hosts: all
+  strategy: host_pinned
+  tasks:
+    - name: Install package
+      yum:
+        name: httpd
+        state: present
+
+2. Error Handling in Ansible
+2.1 Ignore Errors (`ignore_errors`)
+• Allows the playbook to continue execution even if a task fails.
+• Useful for non-critical failures.
+Example:
+
+- name: Install a package (ignoring errors)
+  yum:
+    name: non-existing-package
+    state: present
+  ignore_errors: yes
+
+2.2 Fail Fast (`fail`)
+• Stops execution when a specific condition is met.
+• Useful for critical checks.
+Example:
+
+- name: Stop execution if memory is low
+  fail:
+    msg: "Not enough memory to continue!"
+  when: ansible_memtotal_mb < 500
+
+2.3 Using Blocks: `block`, `rescue`, and `always`
+• `block`: Contains the main tasks.
+• `rescue`: Executes when a task inside the block fails.
+• `always`: Runs regardless of success or failure.
+Example:
+
+- hosts: all
+  tasks:
+    - block:
+        - name: Install Apache
+          yum:
+            name: httpd
+            state: present
+
+      rescue:
+        - name: Print failure message
+          debug:
+            msg: "Apache installation failed, trying Nginx instead."
+
+        - name: Install Nginx
+          yum:
+            name: nginx
+            state: present
+
+      always:
+        - name: Ensure the service is running
+          service:
+            name: nginx
+            state: started
+
+2.4 Retrying Failed Tasks (`retries` & `delay`)
+• Retries a task multiple times before failing.
+• Useful for handling temporary failures (e.g., network issues).
+Example:
+
+- name: Restart a service with retries
+  service:
+    name: httpd
+    state: restarted
+  register: result
+  retries: 5
+  delay: 10
+  until: result is success
+
+2.5 Custom Failure Conditions (`failed_when`)
+• Defines custom failure conditions beyond default Ansible exit codes.
+• Useful when success or failure depends on output verification.
+Example:
+
+- name: Run a command and check output
+  shell: "cat /etc/passwd"
+  register: result
+  failed_when: "'root' not in result.stdout"
+
+2.6 Using Handlers for Graceful Error Handling
+• Handlers execute only when notified by a task.
+• Useful for restarting services only when necessary.
+Example:
+
+- name: Install Apache
+  yum:
+    name: httpd
+    state: present
+  notify: Restart Apache
+
+handlers:
+  - name: Restart Apache
+    service:
+      name: httpd
+      state: restarted
+
+3. Best Practices for Error Handling
+✔ Use `ignore_errors` only for non-critical tasks.
+✔ Use `fail` when critical conditions must be met.
+✔ Use `block/rescue/always` for structured error handling.
+✔ Use `retries` for handling temporary failures.
+✔ Use `failed_when` for custom failure detection.
+✔ Use handlers for service management.
